@@ -54,44 +54,44 @@ connection.connect(async function(err) {
   start();
 });
 
-// //add department
-// async function addDepartment() {
-//   const {newDepartment} = await inquirer.prompt({
-//     type: "input",
-//     message: "Enter department name:",
-//     name: "newDepartment"
-//   });
+//add department
+async function addDepartment() {
+  const {newDepartment} = await inquirer.prompt({
+    type: "input",
+    message: "Enter department name:",
+    name: "newDepartment"
+  });
   
 
-//   connection.query("INSERT INTO department SET ?", {
-//     name:newDepartment
-//   }, function(err,res) {
-//     if (err) throw err;
-//     console.log("Department added");
-//     console.table(res)
-//     connection.end();
-//   });
-// }
+  connection.query("INSERT INTO department SET ?", {
+    name:newDepartment
+  }, function(err,res) {
+    if (err) throw err;
+    console.log("Department added");
+    console.table(res)
+    connection.end();
+  });
+}
 
-// //add role
-// async function addRole() {
-//   const {newTitle,newSalary,newID} = await inquirer.prompt([
-//     {
-//     type: "input",
-//     message: "Enter job title:",
-//     name: "newTitle"
-//     },
-//     {
-//     type: "input",
-//     message: "Enter annual salary:",
-//     name: "newSalary"
-//     },
-//     {
-//     type: "input",
-//     message: "Enter department ID number:",
-//     name: "newID"
-//     }
-// ]);
+//add role
+async function addRole() {
+  const {newTitle,newSalary,newID} = await inquirer.prompt([
+    {
+    type: "input",
+    message: "Enter job title:",
+    name: "newTitle"
+    },
+    {
+    type: "input",
+    message: "Enter annual salary:",
+    name: "newSalary"
+    },
+    {
+    type: "input",
+    message: "Enter department ID number:",
+    name: "newID"
+    }
+]);
   
 
 //   connection.query("INSERT INTO role SET ?", {
