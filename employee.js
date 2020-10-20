@@ -78,7 +78,6 @@ function addDepartment(){
 function addRole() {
   connection.query("SELECT * FROM department", function(err, response) {
     if (err) throw err;
-    // once you have the items, prompt the user for which they'd like to bid on
     inquirer
       .prompt([
       {
@@ -110,8 +109,6 @@ function addRole() {
         chosenDept = response[i].id;
       }
     }
-    console.log(chosenDept)
-     
       connection.query("INSERT INTO role SET ?", {
         title: res.newTitle,
         salary: res.newSalary,
@@ -126,7 +123,11 @@ function addRole() {
 
 //add employee
 function addEmployee() {
-  inquirer.prompt([
+  connection.query("SELECT role.*,employee.*, FROM role,employee;", function(err, response) {
+    if (err) throw err;
+
+    inquirer
+      .prompt([
     {
     type: "input",
     message: "Enter first name:",
@@ -138,26 +139,53 @@ function addEmployee() {
     name: "lastname"
     },
     {
-    type: "input",
-    message: "Enter role ID:",
-    name: "roleID"
-    },
+    type: "list",
+    message: "Enter role:",
+    name: "roleID",
+    choices: function() {
+      var roleArray = [];
+      for (var i = 0; i < response.role.length; i++) {
+        roleArray.push(response[i].title);
+      }
+      return roleArray;
+    }},
     {
-    type: "input",
-    message: "Enter manager ID:",
-    name: "managerID"
-    }
-])
+    type: "list",
+    message: "Choose manager:",
+    name: "managerID",
+    choices: function(){
+    var managers = [];
+    for (var i=0; i < response.employee.length; i++){
+      if(res.employee[i].manager_id === null){
+        manager.push(response.employee[i].first_name)
+    }};
+    return managers;
+    }}
+  ])
+
   .then((res) => {
-      connection.query("INSERT INTO role SET ?", {
+    var chosenRole;
+     for (var i = 0; i < response.role.length; i++) {
+      if (response.role[i].title === res.roleID) {
+        chosenRole = response.role[i].id;
+      }
+    }
+    var chosenMngr;
+     for (var i = 0; i < response.employee.length; i++) {
+      if (response.employee[i].first_name === res.managerID) {
+        chosenMngr = response.employee[i].id;
+      }
+    }
+      connection.query("INSERT INTO employee SET ?", {
         first_name: res.firstname,
         last_name: res.lastname,
-        role_id: res.roleID,
-        manager_id: res.managerID
+        role_id: chosenRole,
+        manager_id: chosenMngr
       });
       console.log("Employee added");
       start();
     });
+  })
 }
 
 
