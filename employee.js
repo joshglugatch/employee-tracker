@@ -251,14 +251,14 @@ function updateEmployee(){
           choices: function() {
             var roleArray = [];
             for (var i = 0; i < response.length; i++) {
-              rolerray.push(response[i].title);
+              roleArray.push(response[i].title);
             }
             return roleArray;
           }
         }
      ])
     .then((res)=>{
-      let name = res.chooseEmployee.split("");
+      let name = res.chooseEmployee.split(" ");
       let first = name[0];
       let last = name[1];
 
@@ -270,7 +270,7 @@ function updateEmployee(){
     }
       connection.query("UPDATE employee SET ? WHERE ? AND ?", [
           {
-            role_id = upRole
+            role_id: upRole
           },
           {
             first_name: first
@@ -281,10 +281,12 @@ function updateEmployee(){
         ],
 
         function (err, res) {
+          if (err) throw err;
           console.log("Employee has been updated.")
-          start();
+          return res;
         }
       ) 
+      start();
     })   
   })
 }
