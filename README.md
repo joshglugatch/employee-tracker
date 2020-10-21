@@ -23,6 +23,23 @@ To run node
 node employee.js
 ```
 
+To run database you must install MySQL and create a local server. Make sure your port, user, and password match. To create the compatible tables you must run the schema.sql file in your workbench.
+You can include some provided table data by running the seeds.sql in your workbench as well.
+Please make sure the following match your personal MySql information, and that the database is set to "employee_db".
+
+```javaScript
+var connection = mysql.createConnection({
+  host: "localhost",
+
+  port: 3306,
+
+  user: "root",
+
+  password: "password",
+  database: "employee_db"
+});
+```
+
 ## Features
 Employee Tracker uses Node.js to run inquirer prompts to grab team member info. Information is stored in a MySQL database where items can be created, viewed, updated, or deleted.
 <br>
