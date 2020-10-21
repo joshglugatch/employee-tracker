@@ -25,7 +25,7 @@ function start(){
     type: "list",
     message: "What do you want to do?",
     name: "start",
-    choices: ["Add Department","Add Role","Add Employee","View Departments","View Roles","View Employees","Update Employee Role","Quit"]
+    choices: ["Add Department","Add Role","Add Employee","View Departments","View Roles","View Employees","Update Employee Role","Remove Employee","Quit"]
   })
   .then((res) => {
       switch (res.start) {
@@ -49,6 +49,9 @@ function start(){
           break;
         case "Update Employee Role":
           updateEmployee();
+          break;
+        case "Remove Employee":
+          removeEmployee();
           break;
         case "Quit":
           console.log("Thanks for using Employee Tracker!")
@@ -127,8 +130,10 @@ function addRole() {
 
 //add employee
 function addEmployee() {
-  connection.query("SELECT employee.id, first_name, last_name, title, manager_id, role_id FROM role INNER JOIN employee ON role.id = employee.role_id;", function(err, response) {
-    console.table(response)
+  connection.query("SELECT * FROM employee", function(err, responseEmp) {
+    if (err) throw err;
+    connection.query("SELECT * FROM role", function(err, responseRole){
+  
     if (err) throw err;
     inquirer
       .prompt([
@@ -148,8 +153,8 @@ function addEmployee() {
     name: "roleID",
     choices: function() {
       var roleArray = [];
-      for (var i = 0; i < response.length; i++) {
-        roleArray.push(response[i].title);
+      for (var i = 0; i < responseRole.length; i++) {
+        roleArray.push(responseRole[i].title);
       }
       return roleArray;
     }},
@@ -159,39 +164,40 @@ function addEmployee() {
     name: "managerID",
     choices: function(){
     var managers = [];
-    for (var i=0; i < response.length; i++){
-      if(response[i].manager_id === null){
-        managers.push(`${response[i].first_name} ${response[i].last_name}`);
+    for (var i=0; i < responseEmp.length; i++){
+      if(responseEmp[i].manager_id === null){
+        managers.push(`${responseEmp[i].first_name} ${responseEmp[i].last_name}`);
     }};
     managers.push("None")
     return managers;
     }}
   ])
 
-  .then((res) => {
-    var chosenRole;
-     for (var i = 0; i < response.length; i++) {
-      if (response[i].title === res.roleID) {
-        chosenRole = response[i].id;
+    .then((res) => {
+      var chosenRole;
+      for (var i = 0; i < responseRole.length; i++) {
+        if (responseRole[i].title === res.roleID) {
+          chosenRole = responseRole[i].id;
+        }
       }
-    }
-    var chosenMngr;
-     for (var i = 0; i < response.length; i++) {
-      if (`${response[i].first_name} ${response[i].last_name}` === res.managerID) {
-        chosenMngr = response[i].id;
-      } else if (res.managerID === "None"){
-        chosenMngr = null
+      var chosenMngr;
+      for (var i = 0; i < responseEmp.length; i++) {
+        if (`${responseEmp[i].first_name} ${responseEmp[i].last_name}` === res.managerID) {
+          chosenMngr = responseEmp[i].id;
+        } else if (res.managerID === "None"){
+          chosenMngr = null
+        }
       }
-    }
-      connection.query("INSERT INTO employee SET ?", {
-        first_name: res.firstname,
-        last_name: res.lastname,
-        role_id: chosenRole,
-        manager_id: chosenMngr
+        connection.query("INSERT INTO employee SET ?", {
+          first_name: res.firstname,
+          last_name: res.lastname,
+          role_id: chosenRole,
+          manager_id: chosenMngr
+        });
+        console.log("Employee added");
+        start();
       });
-      console.log("Employee added");
-      start();
-    });
+  })
   })
 }
 
@@ -209,9 +215,8 @@ function viewDepartment(){
 
 //view employee
 function viewEmployees(){
-    connection.query(`SELECT * FROM  department 
-    INNER JOIN role ON department.id = role.department_id 
-    INNER JOIN employee ON role.id = employee.role_id ORDER BY employee.id ASC`, (err,res) => {
+    connection.query("SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name, role.salary, CONCAT(manager.first_name,' ',manager.last_name) AS manager FROM department INNER JOIN role ON department.id = role.department_id INNER JOIN employee ON role.id = employee.role_id LEFT JOIN employee manager ON employee.manager_id = manager.id ORDER BY employee.id ASC", 
+    (err,res) => {
       if(err) throw err;
         console.table(res);
         start();
@@ -230,8 +235,11 @@ function viewRoles(){
 
 //update employee
 function updateEmployee(){
-  connection.query("SELECT employee.id, first_name, last_name, title, role_id FROM employee LEFT JOIN role ON employee.role_id = role.id", function (err,response) {
+  connection.query("SELECT * FROM employee", function (err,responseEmp) {
     if (err) throw err;
+    connection.query("SELECT * FROM role", function(err,responseRole){
+      if (err) throw err;
+    
     inquirer.prompt([
       {
         type: "list",
@@ -239,8 +247,8 @@ function updateEmployee(){
         name: "chooseEmployee",
         choices: function() {
           var employeeArray = [];
-          for (var i = 0; i < response.length; i++) {
-            employeeArray.push(`${response[i].first_name} ${response[i].last_name}`);
+          for (var i = 0; i < responseEmp.length; i++) {
+            employeeArray.push(`${responseEmp[i].first_name} ${responseEmp[i].last_name}`);
           }
           return employeeArray;
         }},
@@ -250,28 +258,72 @@ function updateEmployee(){
           name: "updateRole",
           choices: function() {
             var roleArray = [];
-            for (var i = 0; i < response.length; i++) {
-              roleArray.push(response[i].title);
+            for (var i = 0; i < responseRole.length; i++) {
+              roleArray.push(responseRole[i].title);
             }
             return roleArray;
           }
         }
+     ])
+      .then((res)=>{
+        let name = res.chooseEmployee.split(" ");
+        let first = name[0];
+        let last = name[1];
+
+        var upRole;
+      for (var i = 0; i < responseRole.length; i++) {
+        if (responseRole[i].title === res.updateRole) {
+          upRole = responseRole[i].id;
+        }
+      }
+        connection.query("UPDATE employee SET ? WHERE ? AND ?", [
+            {
+              role_id: upRole
+            },
+            {
+              first_name: first
+            },
+            {
+              last_name: last
+            }        
+          ],
+
+          function (err, res) {
+            if (err) throw err;
+            console.log("Employee has been updated.")
+            start();
+            return res;
+          }
+        ) 
+        
+      })   
+    })
+  })
+}
+
+//delete employee
+function removeEmployee(){
+  connection.query("SELECT * FROM employee", function (err,response) {
+    if (err) throw err;
+    inquirer.prompt([
+      {
+        type: "list",
+        message: "Which employee would you like to remove?",
+        name: "chooseEmployee",
+        choices: function() {
+          var employeeArray = [];
+          for (var i = 0; i < response.length; i++) {
+            employeeArray.push(`${response[i].first_name} ${response[i].last_name}`);
+          }
+          return employeeArray;
+        }},
      ])
     .then((res)=>{
       let name = res.chooseEmployee.split(" ");
       let first = name[0];
       let last = name[1];
 
-      var upRole;
-     for (var i = 0; i < response.length; i++) {
-      if (response[i].title === res.updateRole) {
-         upRole = response[i].role_id;
-      }
-    }
-      connection.query("UPDATE employee SET ? WHERE ? AND ?", [
-          {
-            role_id: upRole
-          },
+      connection.query("DELETE FROM employee WHERE ? AND ?", [
           {
             first_name: first
           },
@@ -282,11 +334,11 @@ function updateEmployee(){
 
         function (err, res) {
           if (err) throw err;
-          console.log("Employee has been updated.")
+          console.log("Employee has been removed.")
+          start();
           return res;
         }
       ) 
-      start();
     })   
   })
 }
